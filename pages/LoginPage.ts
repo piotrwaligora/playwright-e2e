@@ -9,6 +9,7 @@ export class LoginPage extends BasePage {
   readonly emailInput: Locator;
   readonly passwordInput: Locator;
   readonly submitButton: Locator;
+  readonly errorMessage: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -17,6 +18,8 @@ export class LoginPage extends BasePage {
     this.emailInput = page.getByRole('textbox', { name: 'Email' });
     this.passwordInput = page.getByRole('textbox', { name: 'Password' });
     this.submitButton = page.getByRole('button', { name: 'Submit' });
+    // A plain <span id="error"> with no accessible role or label: an id is the best locator here
+    this.errorMessage = page.locator('#error');
   }
 
   override async goto() {

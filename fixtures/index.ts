@@ -3,6 +3,7 @@ import { ContactsApi } from '../api/ContactsApi';
 import { type AuthResponse, type Contact, type UserData } from '../api/models';
 import { UsersApi } from '../api/UsersApi';
 import { newContact, newUser } from '../data/testData';
+import { ContactListPage } from '../pages/ContactListPage';
 import { LoginPage } from '../pages/LoginPage';
 
 /** A user that exists in the application for the duration of one test. */
@@ -22,9 +23,11 @@ type Fixtures = {
   authUsersApi: UsersApi;
   /** Contacts client authenticated as `user`. */
   contactsApi: ContactsApi;
-  /** A contact of `user`, created through the API. */
-  contact: Contact;
+  /** A contact of `user`, created through the API with every field filled in. */
+  contact: Required<Contact>;
   loginPage: LoginPage;
+  /** Contact list page of `user`, already logged in with the API token. Open it with goto(). */
+  contactListPage: ContactListPage;
 };
 
 /**
@@ -73,12 +76,24 @@ export const test = base.extend<Fixtures>({
   contact: async ({ contactsApi }, use) => {
     const response = await contactsApi.create(newContact());
     expect(response.status(), 'create test contact').toBe(201);
-    await use((await response.json()) as Contact);
+    await use((await response.json()) as Required<Contact>);
     // No teardown here: contacts are deleted together with their user.
   },
 
   loginPage: async ({ page }, use) => {
     await use(new LoginPage(page));
+  },
+
+  // The app keeps the session in a "token" cookie, the same token the API returns.
+  // Setting the cookie skips the login form: only the login test needs to go through it.
+  // The page is NOT opened here. Fixtures are set up in the order the test lists them, so a page
+  // opened here could load before `contact` exists. The test calls goto() when its data is ready.
+  contactListPage: async ({ baseURL, context, page, user }, use) => {
+    if (!baseURL) {
+      throw new Error('baseURL must be set in playwright.config.ts');
+    }
+    await context.addCookies([{ name: 'token', value: user.token, url: baseURL }]);
+    await use(new ContactListPage(page));
   },
 });
 

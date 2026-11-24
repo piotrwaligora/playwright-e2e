@@ -18,8 +18,8 @@ export function newUser(overrides: Partial<UserData> = {}): UserData {
   };
 }
 
-/** A new, unique contact with every field filled in. */
-export function newContact(overrides: Partial<ContactData> = {}): ContactData {
+/** A new, unique contact with every field filled in (hence Required: no optional fields). */
+export function newContact(overrides: Partial<ContactData> = {}): Required<ContactData> {
   const id = uniqueId();
   return {
     firstName: 'John',
