@@ -1,0 +1,2 @@
+# Same line endings (LF) on Windows, macOS and the Linux CI runner; matches Prettier's default
+* text=auto eol=lf

@@ -1,14 +1,14 @@
 import { type Page } from '@playwright/test';
 
 export abstract class BasePage {
-    protected abstract readonly path: string;
-    protected readonly page: Page;
+  protected abstract readonly path: string;
+  protected readonly page: Page;
 
-    constructor(page: Page) {
-        this.page = page;
-    }
+  constructor(page: Page) {
+    this.page = page;
+  }
 
-    async goto() {
-        await this.page.goto(this.path);
-    }
+  async goto() {
+    await this.page.goto(this.path);
+  }
 }
