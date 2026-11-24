@@ -12,11 +12,14 @@ export class ContactListPage extends BasePage {
 
   readonly header: Header;
   readonly addContactButton: Locator;
+  /** The contacts table; the app renders it only after the contacts were loaded successfully. */
+  readonly contactTable: Locator;
 
   constructor(page: Page) {
     super(page);
     this.header = new Header(page);
     this.addContactButton = page.getByRole('button', { name: 'Add a New Contact' });
+    this.contactTable = page.getByRole('table');
   }
 
   override async goto(): Promise<void> {
