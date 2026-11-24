@@ -3,7 +3,7 @@ import { ContactListPage } from './ContactListPage';
 import { BasePage } from './BasePage';
 
 /** Login page: the start page of Contact List App ("/"). */
-export class LoginPage extends BasePage{
+export class LoginPage extends BasePage {
   protected readonly path: string = '/';
   readonly heading: Locator;
   readonly emailInput: Locator;
@@ -19,7 +19,7 @@ export class LoginPage extends BasePage{
     this.submitButton = page.getByRole('button', { name: 'Submit' });
   }
 
-  async goto() {
+  override async goto() {
     await super.goto();
     await expect(this.heading).toBeVisible();
   }

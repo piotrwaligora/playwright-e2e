@@ -1,0 +1,18 @@
+{
+  // Used by the editor, `npm run typecheck` and ESLint.
+  // Playwright compiles TypeScript on its own when running tests, so nothing is emitted here.
+  "compilerOptions": {
+    "target": "es2023",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "types": ["node"],
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitOverride": true,
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": ["**/*.ts", "**/*.mts"],
+  "exclude": ["node_modules", "playwright-report", "test-results"]
+}
