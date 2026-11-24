@@ -1,16 +1,17 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import { ContactListPage } from './ContactListPage';
+import { BasePage } from './BasePage';
 
 /** Login page: the start page of Contact List App ("/"). */
-export class LoginPage {
-  readonly page: Page;
+export class LoginPage extends BasePage{
+  protected readonly path: string = '/';
   readonly heading: Locator;
   readonly emailInput: Locator;
   readonly passwordInput: Locator;
   readonly submitButton: Locator;
 
   constructor(page: Page) {
-    this.page = page;
+    super(page);
     // Locators are lazy: nothing is searched here, only when an action or assertion uses them.
     this.heading = page.getByRole('heading', { name: 'Contact List App' });
     this.emailInput = page.getByRole('textbox', { name: 'Email' });
@@ -18,10 +19,9 @@ export class LoginPage {
     this.submitButton = page.getByRole('button', { name: 'Submit' });
   }
 
-  async goto(): Promise<this> {
-    await this.page.goto('/');
+  async goto() {
+    await super.goto();
     await expect(this.heading).toBeVisible();
-    return this;
   }
 
   async login(email: string, password: string): Promise<ContactListPage> {
