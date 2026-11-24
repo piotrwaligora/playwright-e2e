@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
+import { HealingLocator } from '../support/HealingLocator';
 import { ContactListPage } from './ContactListPage';
 import { BasePage } from './BasePage';
 
@@ -8,7 +9,7 @@ export class LoginPage extends BasePage {
   readonly heading: Locator;
   readonly emailInput: Locator;
   readonly passwordInput: Locator;
-  readonly submitButton: Locator;
+  readonly submitButton: HealingLocator;
   readonly errorMessage: Locator;
 
   constructor(page: Page) {
@@ -17,7 +18,12 @@ export class LoginPage extends BasePage {
     this.heading = page.getByRole('heading', { name: 'Contact List App' });
     this.emailInput = page.getByRole('textbox', { name: 'Email' });
     this.passwordInput = page.getByRole('textbox', { name: 'Password' });
-    this.submitButton = page.getByRole('button', { name: 'Submit' });
+    // Self-healing: the button as the user sees it; if its label changes, the stable id still finds it
+    this.submitButton = new HealingLocator(
+      'login submit button',
+      page.getByRole('button', { name: 'Submit' }),
+      page.locator('#submit'),
+    );
     // A plain <span id="error"> with no accessible role or label: an id is the best locator here
     this.errorMessage = page.locator('#error');
   }
