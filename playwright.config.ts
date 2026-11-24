@@ -1,14 +1,7 @@
-import { defineConfig, devices, type Project } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
 /** Set CI=true (GitHub Actions does it automatically) to get CI behaviour locally. */
 const isCI = !!process.env.CI;
-
-/** Browser projects run the UI and hybrid tests; API tests have their own project. */
-const browser = (name: string, device: string): Project => ({
-  name,
-  testIgnore: '**/api/**',
-  use: { ...devices[device] },
-});
 
 /**
  * Playwright configuration: https://playwright.dev/docs/test-configuration
@@ -52,13 +45,25 @@ export default defineConfig({
     video: 'retain-on-failure',
   },
 
+  // Projects are written out in full on purpose: IDEs (WebStorm, VS Code) read this file
+  // without running it, and they show the run buttons only for projects they can see.
   projects: [
     // API tests do not open a browser, so they run once instead of once per browser
     { name: 'api', testDir: './tests/api' },
-    browser('chromium', 'Desktop Chrome'),
-    browser('webkit', 'Desktop Safari'),
+    // Browser projects run the UI and hybrid tests
+    { name: 'chromium', testDir: './tests', testIgnore: '**/api/**', use: { ...devices['Desktop Chrome'] } },
+    { name: 'webkit', testDir: './tests', testIgnore: '**/api/**', use: { ...devices['Desktop Safari'] } },
     // Firefox runs on CI (Linux). Locally it is off: Playwright's Firefox fails to start on the
     // author's Windows machine ("side-by-side configuration is incorrect", dependent assembly mozglue).
-    ...(isCI ? [browser('firefox', 'Desktop Firefox')] : []),
+    ...(isCI
+      ? [
+          {
+            name: 'firefox',
+            testDir: './tests',
+            testIgnore: '**/api/**',
+            use: { ...devices['Desktop Firefox'] },
+          },
+        ]
+      : []),
   ],
 });
