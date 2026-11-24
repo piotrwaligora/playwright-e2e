@@ -1,0 +1,121 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '23 5 * * *' # daily at 05:23 UTC; off the full hour, when GitHub drops fewer scheduled runs
+  workflow_dispatch:
+
+# A newer run of the same branch cancels the older one
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  REPORT_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+
+jobs:
+  check:
+    name: Format, lint and type check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+
+  tests:
+    name: Tests (shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      # When one shard fails, the other one still finishes, so the report is complete
+      fail-fast: false
+      matrix:
+        # Every value starts a separate machine; Playwright gives each one its part of the tests
+        shardIndex: [1, 2]
+        shardTotal: [2]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
+      # Browsers and the Linux libraries they need
+      - run: npx playwright install --with-deps chromium firefox webkit
+      # CI=true is set by GitHub: retries, Firefox and the blob reporter are switched on in the config
+      - run: npx playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+      - name: Upload blob report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: blob-report-${{ matrix.shardIndex }}
+          path: blob-report
+          retention-days: 3
+
+  report:
+    name: Merge reports
+    needs: tests
+    # Also when tests failed: a report of a failed run is the most useful one
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
+      - name: Download blob reports of all shards
+        uses: actions/download-artifact@v8
+        with:
+          pattern: blob-report-*
+          path: all-blob-reports
+          merge-multiple: true
+      - name: Merge into one HTML report
+        run: npx playwright merge-reports --reporter html ./all-blob-reports
+      - name: Upload HTML report
+        uses: actions/upload-artifact@v7
+        with:
+          name: html-report
+          path: playwright-report
+          retention-days: 14
+      - name: Upload report for GitHub Pages
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: playwright-report
+      - name: Add report links to the run summary
+        run: |
+          echo "### Playwright report" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Latest report from \`main\`: ${{ env.REPORT_URL }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Report of this run: the \`html-report\` artifact below" >> "$GITHUB_STEP_SUMMARY"
+
+  # Publishes the report of main (push, schedule or manual run) to GitHub Pages, also when tests failed
+  publish-report:
+    name: Publish report
+    needs: report
+    if: ${{ !cancelled() && needs.report.result == 'success' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

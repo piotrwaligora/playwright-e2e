@@ -5,8 +5,12 @@
   "private": true,
   "scripts": {
     "test": "playwright test",
+    "test:api": "playwright test --project=api",
+    "test:ui": "playwright test --grep @ui",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:mock": "playwright test --grep @mock",
     "test:headed": "playwright test --headed --project=chromium",
-    "test:ui": "playwright test --ui",
+    "test:ui-mode": "playwright test --ui",
     "report": "playwright show-report",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
