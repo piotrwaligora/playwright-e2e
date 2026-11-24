@@ -38,8 +38,10 @@ export default defineConfig({
   },
 
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'webkit', use: { ...devices['Desktop Safari'] } },
+    // API tests do not open a browser, so they run once instead of once per browser
+    { name: 'api', testDir: './tests/api' },
+    { name: 'chromium', testIgnore: '**/api/**', use: { ...devices['Desktop Chrome'] } },
+    { name: 'webkit', testIgnore: '**/api/**', use: { ...devices['Desktop Safari'] } },
     // Firefox is disabled for now: Playwright's Firefox fails to start on the author's Windows machine
     // ("side-by-side configuration is incorrect", dependent assembly mozglue).
     // { name: 'firefox', use: { ...devices['Desktop Firefox'] } },

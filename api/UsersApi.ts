@@ -1,17 +1,9 @@
-import { type APIRequestContext, type APIResponse } from '@playwright/test';
-import { type UserData } from '../data/testData';
+import { type APIResponse } from '@playwright/test';
+import { BaseApi } from './BaseApi';
+import { type UserData } from './models';
 
-/**
- * Client of the /users endpoints. Returns raw responses, so tests decide which status they expect.
- * Paths are relative to `baseURL` from playwright.config.ts.
- */
-export class UsersApi {
-  readonly request: APIRequestContext;
-
-  constructor(request: APIRequestContext) {
-    this.request = request;
-  }
-
+/** Client of the /users endpoints. Registration and login do not need a token. */
+export class UsersApi extends BaseApi {
   register(user: UserData): Promise<APIResponse> {
     return this.request.post('/users', { data: user });
   }
@@ -20,15 +12,20 @@ export class UsersApi {
     return this.request.post('/users/login', { data: { email, password } });
   }
 
-  getProfile(token: string): Promise<APIResponse> {
-    return this.request.get('/users/me', { headers: authorization(token) });
+  getProfile(): Promise<APIResponse> {
+    return this.request.get('/users/me', { headers: this.headers });
   }
 
-  deleteMe(token: string): Promise<APIResponse> {
-    return this.request.delete('/users/me', { headers: authorization(token) });
+  updateProfile(fields: Partial<UserData>): Promise<APIResponse> {
+    return this.request.patch('/users/me', { headers: this.headers, data: fields });
   }
-}
 
-function authorization(token: string) {
-  return { Authorization: `Bearer ${token}` };
+  /** Note: the API invalidates every token of the user, not only the one used here. */
+  logout(): Promise<APIResponse> {
+    return this.request.post('/users/logout', { headers: this.headers });
+  }
+
+  deleteMe(): Promise<APIResponse> {
+    return this.request.delete('/users/me', { headers: this.headers });
+  }
 }
